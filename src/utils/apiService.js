@@ -31,7 +31,13 @@ export const authAPI = {
 export const albumAPI = {
   getAlbums: (userId) => api.get(`/albums/user/${userId}`),
   getAlbumById: (id) => api.get(`/albums/${id}`),
-  createAlbum: (albumData) => api.post('/albums', albumData),
+  createAlbum: (formData) => {
+    return api.post('/albums', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   updateAlbum: (id, albumData) => api.put(`/albums/${id}`, albumData),
   deleteAlbum: (id) => api.delete(`/albums/${id}`),
 };

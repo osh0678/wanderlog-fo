@@ -66,10 +66,10 @@ function Albums() {
                 state={{ title: album.title, description: album.description }}
                 className="block bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
-                {album.coverImage ? (
+                {album.coverPhotoUrl ? (
                   <div className="relative h-48">
                     <img
-                      src={`${process.env.REACT_APP_IMAGE_URL}${album.filePath}`}
+                      src={`${process.env.REACT_APP_IMAGE_URL}${album.coverPhotoUrl}`}
                       alt={album.title}
                       className="object-cover w-full h-full"
                     />

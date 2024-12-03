@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { albumAPI } from '../utils/apiService';
 import useStore from '../stores/useStore';
@@ -15,6 +15,13 @@ function CreateAlbum() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!userId) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+    }
+  }, [userId, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

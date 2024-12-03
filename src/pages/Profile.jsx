@@ -5,7 +5,7 @@ import { authAPI } from '../utils/apiService';
 
 function Profile() {
   const navigate = useNavigate();
-  const { logout, userId } = useStore();
+  const { clearUser, userId } = useStore();
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,7 +32,7 @@ function Profile() {
   }, [userId]);
 
   const handleLogout = () => {
-    logout();
+    clearUser();
     navigate('/login');
   };
 

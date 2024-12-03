@@ -2,12 +2,21 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { albumAPI } from '../utils/apiService';
 import useStore from '../stores/useStore';
+import { useNavigate } from 'react-router-dom';
 
 function Albums() {
+  const navigate = useNavigate();
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const userId = useStore((state) => state.userId);
+  useEffect(() => {
+    if (!userId) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+    }
+  }, [userId, navigate]);
+
   useEffect(() => {
     const fetchAlbums = async () => {
       try {

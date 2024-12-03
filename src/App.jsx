@@ -13,8 +13,8 @@ import Timeline from './pages/Timeline';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col pb-16">
-        <main className="flex-grow">
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+        <main className="flex-grow pb-16">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

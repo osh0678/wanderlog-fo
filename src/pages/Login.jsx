@@ -87,18 +87,16 @@ function Login() {
     try {
       setIsLoading(true);
       const response = await authAPI.login(formData);
+      console.log(response);
       
       // 로그인 성공 메시지 설정
       setMessage({
         type: 'success',
-        text: response.message || '로그인에 성공했습니다!'
+        text: response.data.message || '로그인에 성공했습니다!'
       });
       
       // Zustand 스토어에 userId 저장
-      setUserId(response.userId);
-      
-      // 토큰 저장
-      localStorage.setItem('token', response.token);
+      setUserId(response.data.userId);
       
       // 3초 후 리다이렉트
       setTimeout(() => {

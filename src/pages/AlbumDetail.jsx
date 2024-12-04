@@ -18,6 +18,10 @@ function AlbumDetail() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [photoUploads, setPhotoUploads] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editData, setEditData] = useState(null);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -129,11 +133,55 @@ function AlbumDetail() {
   const openPhotoModal = (photo) => {
     setSelectedPhoto(photo);
     setShowPhotoModal(true);
+    setPhotoToDelete(photo)
   };
 
   const closePhotoModal = () => {
     setShowPhotoModal(false);
     setSelectedPhoto(null);
+  };
+
+  const handleDeleteClick = (e, photo) => {
+    e.stopPropagation(); // 상세보기 모달이 열리는 것을 방지
+    setPhotoToDelete(photo);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      console.log(photoToDelete.id);
+      await photoAPI.deletePhoto(userId, photoToDelete.id);
+      setPhotos(photos.filter(photo => photo.id !== photoToDelete.id));
+      setShowPhotoModal(false);
+      setShowDeleteModal(false);
+      setPhotoToDelete(null);
+    } catch (err) {
+      setError('사진 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditData({
+      title: selectedPhoto.title,
+      description: selectedPhoto.description,
+      takenAt: selectedPhoto.takenAt,
+      tags: [...selectedPhoto.tags]
+    });
+    setIsEditMode(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      await photoAPI.updatePhoto(selectedPhoto.id, editData);
+      // 사진 목록 업데이트
+      setPhotos(photos.map(photo => 
+        photo.id === selectedPhoto.id ? { ...photo, ...editData } : photo
+      ));
+      setIsEditMode(false);
+      setSelectedPhoto({ ...selectedPhoto, ...editData });
+    } catch (err) {
+      setError('사진 수정 중 오류가 발생했습니다.');
+    }
   };
 
   if (loading) {
@@ -144,7 +192,7 @@ function AlbumDetail() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {showErrorModal && error && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center"
           onClick={closeErrorModal}
         >
           <div 
@@ -175,42 +223,170 @@ function AlbumDetail() {
           onClick={closePhotoModal}
         >
           <div 
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-3xl mx-4"
+            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-3xl mx-4 w-full"
             onClick={e => e.stopPropagation()}
           >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {isEditMode ? '사진 수정' : '사진 상세'}
+              </h3>
+              <button
+                onClick={closePhotoModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
             <img
               src={`${process.env.REACT_APP_IMAGE_URL}${selectedPhoto.filePath}`}
-              alt={selectedPhoto.caption || '앨범 사진'}
-              className="object-contain w-full h-full"
+              alt={selectedPhoto.title || '앨범 사진'}
+              className="w-full h-64 object-contain mb-4"
             />
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {selectedPhoto.title || '제목 없음'}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-2">
-                {selectedPhoto.description || '설명 없음'}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {selectedPhoto.tags && selectedPhoto.tags.length > 0 ? (
-                  selectedPhoto.tags.map((tag, index) => (
-                    <span 
-                      key={index} 
-                      className="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-sm"
-                    >
-                      {tag}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-500 dark:text-gray-400">태그 없음</span>
-                )}
+
+            {isEditMode ? (
+              // 수정 모드 폼
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    제목
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.title}
+                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    설명
+                  </label>
+                  <textarea
+                    value={editData.description}
+                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    rows="3"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    촬영일
+                  </label>
+                  <input
+                    type="date"
+                    value={editData.takenAt}
+                    onChange={(e) => setEditData({ ...editData, takenAt: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    태그
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {editData.tags.map((tag, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm flex items-center"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => {
+                            const newTags = editData.tags.filter((_, i) => i !== index);
+                            setEditData({ ...editData, tags: newTags });
+                          }}
+                          className="ml-1 text-blue-600 hover:text-blue-800"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="태그 입력 후 Enter"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const newTag = e.target.value.trim();
+                        if (newTag && !editData.tags.includes(newTag)) {
+                          setEditData({
+                            ...editData,
+                            tags: [...editData.tags, newTag]
+                          });
+                          e.target.value = '';
+                        }
+                      }
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setShowPhotoModal(false);
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleEditSubmit}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    저장
+                  </button>
+                </div>
               </div>
-            </div>
-            <button
-              onClick={closePhotoModal}
-              className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              닫기
-            </button>
+            ) : (
+              // 상세 보기 모드
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {selectedPhoto.title || '제목 없음'}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-2">
+                  {selectedPhoto.description || '설명 없음'}
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 mb-2">
+                  촬영일: {selectedPhoto.takenAt || '날짜 정보 없음'}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {selectedPhoto.tags && selectedPhoto.tags.length > 0 ? (
+                    selectedPhoto.tags.map((tag, index) => (
+                      <span 
+                        key={index} 
+                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
+                      >
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">태그 없음</span>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={handleEditClick}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    수정
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -365,6 +541,36 @@ function AlbumDetail() {
         </div>
       )}
 
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm mx-4 w-full">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              사진 삭제
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              정말 이 사진을 삭제하시겠습니까?
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setPhotoToDelete(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -418,10 +624,17 @@ function AlbumDetail() {
                   className="object-cover w-full h-full"
                   loading="lazy"
                 />
+                <button
+                  onClick={(e) => handleDeleteClick(e, photo)}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-200">
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
-                      onClick={() => openPhotoModal(photo)}
                       className="bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100"
                     >
                       상세보기

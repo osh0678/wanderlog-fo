@@ -54,8 +54,8 @@ export const photoAPI = {
     }),
   updatePhoto: (userId, photoId, photoData) => 
     api.put(`/albums/photos/${userId}/${photoId}`, photoData),
-  deletePhoto: (albumId, photoId) => 
-    api.delete(`/albums/photos/${photoId}`),
+  deletePhoto: (userId, photoId) => 
+    api.delete(`/albums/photos/${userId}/${photoId}`),
 };
 
 export const userAPI = {

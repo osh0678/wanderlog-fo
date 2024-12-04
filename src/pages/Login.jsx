@@ -37,9 +37,6 @@ function Login() {
     if (!password) {
       return '비밀번호를 입력해주세요.';
     }
-    if (password.length < 4) {
-      return '비밀번호는 최소 4자 이상이어야 합니다.';
-    }
     return '';
   };
 
@@ -104,9 +101,10 @@ function Login() {
       }, 3000);
       
     } catch (error) {
+      console.log(error);
       setMessage({
         type: 'error',
-        text: error.message || '로그인에 실패했습니다. 다시 시도해주세요.'
+        text: error.response.data.message || '로그인에 실패했습니다. 다시 시도해주세요.'
       });
     } finally {
       setIsLoading(false);

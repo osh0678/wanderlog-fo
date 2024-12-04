@@ -87,7 +87,45 @@ function CreateAlbum() {
 
       // 이미지가 있는 경우에만 추가
       if (formData.coverImage) {
-        form.append('coverImage', formData.coverImage);
+        // 이미지 리사이징
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const maxWidth = 800; // 최대 너비
+        const maxHeight = 800; // 최대 높이
+
+        const img = new Image();
+        img.src = preview;
+
+        await new Promise((resolve) => {
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            // 비율 계산
+            if (width > height) {
+              if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width *= maxHeight / height;
+                height = maxHeight;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 리사이징된 이미지를 Blob으로 변환
+            canvas.toBlob((blob) => {
+              form.append('coverImage', blob, formData.coverImage.name);
+              resolve();
+            }, 'image/jpeg', 0.8);
+          };
+        });
       }
 
       await albumAPI.createAlbum(form);

@@ -16,6 +16,8 @@ function Timeline() {
     location: '',
     tags: []
   });
+  const [selectedTag, setSelectedTag] = useState('');
+  const [allTags, setAllTags] = useState([]);
 
   useEffect(() => {
     if (!userId) {
@@ -28,8 +30,21 @@ function Timeline() {
     const fetchPhotos = async () => {
       try {
         const response = await photoAPI.getTimelinePhotos(userId);
+        
+        // 모든 태그 수집
+        const tags = new Set();
+        response.data.forEach(photo => {
+          photo.tags?.forEach(tag => tags.add(tag));
+        });
+        setAllTags(Array.from(tags));
+
+        // 태그로 필터링
+        const filteredPhotos = selectedTag
+          ? response.data.filter(photo => photo.tags?.includes(selectedTag))
+          : response.data;
+
         // 날짜별로 사진 그룹화
-        const groupedPhotos = response.data.reduce((groups, photo) => {
+        const groupedPhotos = filteredPhotos.reduce((groups, photo) => {
           const date = new Date(photo.takenAt).toLocaleDateString();
           if (!groups[date]) {
             groups[date] = [];
@@ -49,7 +64,7 @@ function Timeline() {
     if (userId) {
       fetchPhotos();
     }
-  }, [userId]);
+  }, [userId, selectedTag]);
 
   const handlePhotoClick = (photo) => {
     setSelectedPhoto(photo);
@@ -103,6 +118,10 @@ function Timeline() {
     return false; // 태그가 추가되지 않았음을 알림
   };
 
+  const handleTagSelect = (tag) => {
+    setSelectedTag(tag === selectedTag ? '' : tag);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -134,6 +153,34 @@ function Timeline() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">타임라인</h1>
           <p className="text-gray-600 dark:text-gray-400">시간순으로 추억을 돌아보세요</p>
+        </div>
+
+        {/* 타그 필터 추가 */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">태그로 필터링</h2>
+          <div className="flex flex-wrap gap-2">
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => handleTagSelect(tag)}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  selectedTag === tag
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                }`}
+              >
+                #{tag}
+              </button>
+            ))}
+            {selectedTag && (
+              <button
+                onClick={() => setSelectedTag('')}
+                className="px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+              >
+                필터 초기화
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 타임라인 */}

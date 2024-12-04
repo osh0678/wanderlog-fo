@@ -126,7 +126,7 @@ function Register() {
 
     try {
       setIsLoading(true);
-      const response = await authAPI.register({
+      await authAPI.register({
         email: formData.email,
         password: formData.password,
         username: formData.username

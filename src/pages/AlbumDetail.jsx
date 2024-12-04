@@ -149,7 +149,6 @@ function AlbumDetail() {
 
   const handleDeleteConfirm = async () => {
     try {
-      console.log(photoToDelete.id);
       await photoAPI.deletePhoto(userId, photoToDelete.id);
       setPhotos(photos.filter(photo => photo.id !== photoToDelete.id));
       setShowPhotoModal(false);

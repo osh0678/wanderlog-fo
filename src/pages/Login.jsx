@@ -84,7 +84,6 @@ function Login() {
     try {
       setIsLoading(true);
       const response = await authAPI.login(formData);
-      console.log(response);
       
       // 로그인 성공 메시지 설정
       setMessage({
@@ -101,7 +100,6 @@ function Login() {
       }, 3000);
       
     } catch (error) {
-      console.log(error);
       setMessage({
         type: 'error',
         text: error.response.data.message || '로그인에 실패했습니다. 다시 시도해주세요.'

@@ -26,11 +26,11 @@ function Register() {
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    // 닉네임 검사
+    // 이름 검사
     if (!formData.username) {
-      newErrors.username = '닉네임을 입력해주세요.';
+      newErrors.username = '이름을 입력해주세요.';
     } else if (formData.username.length < 2) {
-      newErrors.username = '닉네임은 2자 이상이어야 합니다.';
+      newErrors.username = '이름은 2자 이상이어야 합니다.';
     }
 
     // 비밀번호 검사
@@ -72,7 +72,6 @@ function Register() {
         password: formData.password,
         username: formData.username
       });
-      console.log(response);
 
       setMessage({
         type: 'success',
@@ -87,7 +86,7 @@ function Register() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.message || '회원가입 중 오류가 발생��습니다.'
+        text: error.response.data.message || '회원가입 중 오류가 발생했습니다.'
       });
     } finally {
       setIsLoading(false);

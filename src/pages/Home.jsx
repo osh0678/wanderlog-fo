@@ -8,12 +8,14 @@ function Home() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* 헤더 섹션 */}
-        <header className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-800 dark:text-white mb-4">
+        <header className="text-center mb-16 px-4">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-6 tracking-tight">
             WanderLog
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            소중한 순간들을 영원히 간직하세요!!
+          <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto leading-relaxed">
+            소중한 순간들을 영원히 간직하세요!
+            <br/>
+            당신만의 특별한 이야기를 시작하세요.
           </p>
         </header>
 
@@ -56,15 +58,6 @@ function Home() {
                 </svg>
               }
             />
-          </div>
-          {/* CTA 버튼 */}
-          <div className="text-center space-y-4">
-            <Link 
-              to={userId ? "/albums" : "/login"}
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
-            >
-              {userId ? "앨범 보러가기" : "로그인하기"}
-            </Link>
           </div>
         </main>
       </div>

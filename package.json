@@ -15,8 +15,8 @@
     "zustand": "^5.0.1"
   },
   "scripts": {
-    "dev": "react-scripts dev",
-    "start": "react-scripts start",
+    "dev": "PORT=3001 react-scripts dev",
+    "start": "PORT=3001 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

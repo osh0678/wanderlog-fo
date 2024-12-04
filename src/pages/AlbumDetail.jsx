@@ -97,9 +97,53 @@ function AlbumDetail() {
     setUploadingPhotos(true);
     try {
       // 각 파일별로 개별 업로드
-      const uploadPromises = photoUploads.map(upload => {
+      const uploadPromises = photoUploads.map(async upload => {
+        // 이미지 리사이징
+        const resizedFile = await new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // 가로/세로 800px 제한
+            if (width > 800 || height > 800) {
+              if (width > height) {
+                height = height * (800 / width);
+                width = 800;
+              } else {
+                width = width * (800 / height); 
+                height = 800;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob((blob) => {
+              // 500MB 제한
+              if (blob.size > 500 * 1024 * 1024) {
+                const quality = (500 * 1024 * 1024) / blob.size;
+                canvas.toBlob((resizedBlob) => {
+                  resolve(new File([resizedBlob], upload.file.name, {
+                    type: 'image/jpeg',
+                  }));
+                }, 'image/jpeg', quality);
+              } else {
+                resolve(new File([blob], upload.file.name, {
+                  type: 'image/jpeg', 
+                }));
+              }
+            }, 'image/jpeg', 0.9);
+          };
+          img.src = URL.createObjectURL(upload.file);
+        });
+
         const formData = new FormData();
-        formData.append('file', upload.file);
+        formData.append('file', resizedFile);
         formData.append('title', upload.title);
         formData.append('description', upload.description);
         formData.append('takenAt', upload.takenAt);
@@ -183,6 +227,24 @@ function AlbumDetail() {
       setError('사진 수정 중 오류가 발생했습니다.');
     }
   };
+
+  useEffect(() => {
+    // 모달이 하나라도 열려있는지 확인
+    const isAnyModalOpen = showErrorModal || showPhotoModal || showUploadModal || showDeleteModal;
+    
+    if (isAnyModalOpen) {
+      // 모달이 열릴 때 body에 overflow: hidden 적용
+      document.body.style.overflow = 'hidden';
+    } else {
+      // 모달이 닫힐 때 원래대로 복구
+      document.body.style.overflow = 'unset';
+    }
+
+    // 컴포넌트가 언마운트될 때 cleanup
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showErrorModal, showPhotoModal, showUploadModal, showDeleteModal]);
 
   if (loading) {
     return <div className="text-center py-10">로딩 중...</div>;
@@ -390,27 +452,26 @@ function AlbumDetail() {
           </div>
         </div>
       )}
-
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto py-10">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto py-8 px-2">
           <div 
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-4xl mx-4 w-full"
+            className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-[95vw] sm:max-w-4xl max-h-[75vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 사진 업로드
               </h2>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 text-2xl p-2"
               >
                 ✕
               </button>
             </div>
 
-            <div className="mb-6">
-              <label className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <div className="mb-4">
+              <label className="cursor-pointer inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 text-base">
                 사진 선택
                 <input
                   type="file"
@@ -422,11 +483,11 @@ function AlbumDetail() {
               </label>
             </div>
 
-            <div className="space-y-6 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-4 overflow-y-auto flex-1 mb-4">
               {photoUploads.map((upload, index) => (
-                <div key={index} className="border dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex gap-4">
-                    <div className="w-40 h-40 flex-shrink-0 relative group">
+                <div key={index} className="border dark:border-gray-700 rounded-lg p-3">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="w-full sm:w-40 h-40 flex-shrink-0 relative group">
                       <img
                         src={URL.createObjectURL(upload.file)}
                         alt="미리보기"
@@ -434,64 +495,63 @@ function AlbumDetail() {
                       />
                       <button
                         onClick={() => handleRemoveUpload(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       >
                         ✕
                       </button>
                     </div>
 
-                    <div className="flex-grow space-y-4">
+                    <div className="flex-grow space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                           제목
                         </label>
                         <input
                           type="text"
                           value={upload.title}
                           onChange={(e) => handlePhotoInfoChange(index, 'title', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                          className="w-full px-4 py-2 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                           설명
                         </label>
                         <textarea
                           value={upload.description}
                           onChange={(e) => handlePhotoInfoChange(index, 'description', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                          className="w-full px-4 py-2 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                           rows="2"
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            촬영일
-                          </label>
-                          <input
-                            type="date"
-                            value={upload.takenAt}
-                            onChange={(e) => handlePhotoInfoChange(index, 'takenAt', e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                          />
-                        </div>
-                      </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          촬영일
+                        </label>
+                        <input
+                          type="date"
+                          value={upload.takenAt}
+                          onChange={(e) => handlePhotoInfoChange(index, 'takenAt', e.target.value)}
+                          className="w-full px-4 py-2 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                           태그
                         </label>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {upload.tags.map((tag, tagIndex) => (
                             <span 
                               key={tagIndex}
-                              className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm flex items-center"
+                              className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-base flex items-center"
                             >
                               {tag}
                               <button
                                 onClick={() => handleRemoveTag(index, tagIndex)}
-                                className="ml-1 text-blue-600 hover:text-blue-800"
+                                className="ml-2 text-blue-600 hover:text-blue-800 text-xl"
                               >
                                 ×
                               </button>
@@ -505,7 +565,7 @@ function AlbumDetail() {
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               const newTag = e.target.value.trim();
-                              if (newTag && !upload.tags.includes(newTag)) { // 중복 태그 체크
+                              if (newTag && !upload.tags.includes(newTag)) {
                                 handleAddTag(index, newTag);
                                 e.target.value = '';
                               } else if (upload.tags.includes(newTag)) {
@@ -513,7 +573,7 @@ function AlbumDetail() {
                               }
                             }
                           }}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                          className="w-full px-4 py-2 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                         />
                       </div>
                     </div>
@@ -522,17 +582,17 @@ function AlbumDetail() {
               ))}
             </div>
 
-            <div className="flex justify-end gap-4 mt-6">
+            <div className="flex justify-end gap-4 border-t dark:border-gray-700 pt-4 bg-white dark:bg-gray-800 p-4 sticky bottom-0">
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                className="px-6 py-2 text-base bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 취소
               </button>
               <button
                 onClick={handleUploadSubmit}
                 disabled={uploadingPhotos || photoUploads.length === 0}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="px-6 py-2 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {uploadingPhotos ? '업로드 중...' : '업로드'}
               </button>
@@ -572,30 +632,34 @@ function AlbumDetail() {
       )}
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <button
+            onClick={() => navigate('/albums')}
+            className="absolute left-0 top-0 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <div className="ml-8 flex-grow">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {title || '제목 없음'}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {description || '설명 없음'}
-            </p>
+            <div className="flex items-center">
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+                {description || '설명 없음'}
+              </p>
+            </div>
           </div>
-          <div className="flex space-x-4">
-            <button
-              onClick={openUploadModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              disabled={uploadingPhotos}
-            >
-              사진 추가
-            </button>
-            <button
-              onClick={() => navigate('/albums')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-            >
-              돌아가기
-            </button>
-          </div>
+
+          <button
+            onClick={openUploadModal}
+            className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
+            disabled={uploadingPhotos}
+          >
+            사진 추가
+          </button>
         </div>
 
         {uploadingPhotos && (

@@ -39,7 +39,7 @@ export const albumAPI = {
     });
   },
   updateAlbum: (id, albumData) => api.put(`/albums/${id}`, albumData),
-  deleteAlbum: (id) => api.delete(`/albums/${id}`),
+  deleteAlbum: (userId, albumId) => api.delete(`/albums/${userId}/${albumId}`),
 };
 
 export const photoAPI = {

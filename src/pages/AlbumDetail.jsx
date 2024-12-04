@@ -155,6 +155,7 @@ function AlbumDetail() {
       setShowPhotoModal(false);
       setShowDeleteModal(false);
       setPhotoToDelete(null);
+      alert('사진 삭제가 완료되었습니다.');
     } catch (err) {
       setError('사진 삭제 중 오류가 발생했습니다.');
     }

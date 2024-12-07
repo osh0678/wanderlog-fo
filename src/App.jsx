@@ -13,8 +13,8 @@ import Timeline from './pages/Timeline';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-        <main className="flex-grow pb-16">
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <main className="flex-grow pb-16 overflow-auto" style={{ maxHeight: 'calc(100vh - env(safe-area-inset-top))' }}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

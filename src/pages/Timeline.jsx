@@ -243,7 +243,7 @@ function Timeline() {
       {/* 사진 상세 모달 */}
       {selectedPhoto && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[70vh] overflow-y-auto">
             <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editMode ? '사진 정보 수정' : '사진 상세정보'}
